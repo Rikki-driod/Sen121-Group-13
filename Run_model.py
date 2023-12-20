@@ -15,4 +15,12 @@ pos = nx.spring_layout(model.G)
 for step in range(20):
     model.step()
 
-print(model.datacollector.get_model_vars_dataframe())
+data = model.datacollector.get_model_vars_dataframe()
+print(f"Columns: {data.columns}")
+
+#print(model.datacollector.get_model_vars_dataframe())
+
+import seaborn as sns
+sns.lineplot(data=model)
+
+
