@@ -1,5 +1,5 @@
 # Importa le classi del modello e degli agenti
-from Model.AdaptationModel import AdaptationModel
+from model import AdaptationModel
 
 # Crea un'istanza del modello
 adaptation_model = AdaptationModel(

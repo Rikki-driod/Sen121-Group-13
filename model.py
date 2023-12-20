@@ -156,9 +156,9 @@ class AdaptationModel(Model):
         """
         # Define paths to flood maps
         flood_map_paths = {
-            'harvey': r'../input_data/floodmaps/Harvey_depth_meters.tif',
-            '100yr': r'../input_data/floodmaps/100yr_storm_depth_meters.tif',
-            '500yr': r'../input_data/floodmaps/500yr_storm_depth_meters.tif'  # Example path for 500yr flood map
+            'harvey': r'input_data/floodmaps/Harvey_depth_meters.tif',
+            '100yr': r'input_data/floodmaps/100yr_storm_depth_meters.tif',
+            '500yr': r'input_data/floodmaps/500yr_storm_depth_meters.tif'  # Example path for 500yr flood map
         }
 
         # Throw a ValueError if the flood map choice is not in the dictionary
