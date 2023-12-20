@@ -24,31 +24,35 @@ class AdaptationModel(Model):
     simulates their behavior, and collects data. The network type can be adjusted based on study requirements.
     """
 
-    def __init__(self, 
-                 seed = None,
-                 number_of_households = 25, # number of household agents
+    def __init__(self,
+                 seed=None,
+                 number_of_households=1000,  # number of household agents
                  # Simplified argument for choosing flood map. Can currently be "harvey", "100yr", or "500yr".
                  flood_map_choice='harvey',
                  # ### network related parameters ###
                  # The social network structure that is used.
                  # Can currently be "erdos_renyi", "barabasi_albert", "watts_strogatz", or "no_network"
-                 network = 'watts_strogatz',
+                 network='watts_strogatz',
                  # likeliness of edge being created between two nodes
-                 probability_of_network_connection = 0.4,
+                 probability_of_network_connection=0.4,
                  # number of edges for BA network
-                 number_of_edges = 3,
+                 number_of_edges=3,
                  # number of nearest neighbours for WS social network
-                 number_of_nearest_neighbours = 5,
-                 ):
-        
-        super().__init__(seed = seed)
-        
+                 number_of_nearest_neighbours=5,
+                 information_policy_type = 'knocking',
+                 information_policy_radius=None  # New parameter for radius
+    ):
+
+        super().__init__(seed=seed)
+
         # defining the variables and setting the values
         self.number_of_households = number_of_households  # Total number of household agents
         self.seed = seed
-
+        #information policy type
+        self.information_policy_type = information_policy_type
+        self.information_policy_radius = information_policy_radius
         # network
-        self.network = network # Type of network to be created
+        self.network = network  # Type of network to be created
         self.probability_of_network_connection = probability_of_network_connection
         self.number_of_edges = number_of_edges
         self.number_of_nearest_neighbours = number_of_nearest_neighbours
@@ -70,27 +74,55 @@ class AdaptationModel(Model):
             self.schedule.add(household)
             self.grid.place_agent(agent=household, node_id=node)
 
-        # You might want to create other agents here, e.g. insurance agents.
+
 
         # Data collection setup to collect data
         model_metrics = {
-                        "total_adapted_households": self.total_adapted_households,
-                        # ... other reporters ...
-                        }
-        
+            # Total households in each adaptation state
+            "total_households_state_0": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.state == 0),
+            "total_households_state_1": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.state == 1),
+            "total_households_state_2": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.state == 2),
+            "total_households_state_3": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.state == 3),
+            "total_households_state_4": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.state == 4),
+
+            # Average actual flood depth and damage across all households
+            "average_actual_flood_depth": lambda m: sum(agent.flood_depth_actual for agent in m.schedule.agents if isinstance(agent, Households)) / len(m.schedule.agents),
+            "average_actual_flood_damage": lambda m: sum(agent.flood_damage_actual for agent in m.schedule.agents if isinstance(agent, Households)) / len(m.schedule.agents),
+
+            # Proportion of households that have been reached by the information policy
+            "proportion_reached_by_info_policy": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.reached) / len(m.schedule.agents),
+
+            # Proportion of households within the floodplain
+            "proportion_in_floodplain": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.in_floodplain) / len(m.schedule.agents),
+
+            # Average level of knowledge among all households
+            "average_level_of_knowledge": lambda m: sum(agent.level_of_knowledge for agent in m.schedule.agents if isinstance(agent, Households)) / len(m.schedule.agents),
+
+            # Proportion of households influenced by neighbors
+            "proportion_influenced_by_neighbors": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.has_been_influenced_by_neighbors) / len(m.schedule.agents),
+
+            #system damage
+            "TotalDamage": lambda m: sum(
+                agent.flood_damage_actual for agent in m.schedule.agents if isinstance(agent, Households)),
+            "AverageDamage": lambda m: sum(
+                agent.flood_damage_actual for agent in m.schedule.agents if isinstance(agent, Households)) / len(
+                m.schedule.agents),
+        }
+
         agent_metrics = {
-                        "FloodDepthEstimated": "flood_depth_estimated",
-                        "FloodDamageEstimated" : "flood_damage_estimated",
-                        "FloodDepthActual": "flood_depth_actual",
-                        "FloodDamageActual" : "flood_damage_actual",
-                        "IsAdapted": "is_adapted",
-                        "FriendsCount": lambda a: a.count_friends(radius=1),
-                        "location":"location",
-                        # ... other reporters ...
-                        }
-        #set up the data collector 
+            "FloodDepthActual": "flood_depth_actual",
+            "FloodDamageActual": "flood_damage_actual",
+            "State": "state",
+            "InFloodplain": "in_floodplain",  # Se l'agente si trova nella pianura alluvionale
+            "LevelOfKnowledge": "level_of_knowledge",  # Livello di conoscenza dell'agente
+            "HasBeenReached": "reached",  # Se l'agente è stato raggiunto dalla politica informativa
+            "HasBeenInfluenced": "has_been_influenced_by_neighbors",  # Se l'agente è stato influenzato dai vicini
+            "Location": "location",  # Posizione geografica dell'agente
+            # Se hai un metodo per contare gli amici o vicini, aggiungilo qui
+            "FriendsCount": lambda a: len(a.model.grid.get_neighbors(a.pos, include_center=False)),
+        }
+        # set up the data collector
         self.datacollector = DataCollector(model_reporters=model_metrics, agent_reporters=agent_metrics)
-            
 
     def initialize_network(self):
         """
@@ -106,18 +138,17 @@ class AdaptationModel(Model):
                                             seed=self.seed)
         elif self.network == 'watts_strogatz':
             return nx.watts_strogatz_graph(n=self.number_of_households,
-                                        k=self.number_of_nearest_neighbours,
-                                        p=self.probability_of_network_connection,
-                                        seed=self.seed)
+                                           k=self.number_of_nearest_neighbours,
+                                           p=self.probability_of_network_connection,
+                                           seed=self.seed)
         elif self.network == 'no_network':
             G = nx.Graph()
             G.add_nodes_from(range(self.number_of_households))
             return G
         else:
             raise ValueError(f"Unknown network type: '{self.network}'. "
-                            f"Currently implemented network types are: "
-                            f"'erdos_renyi', 'barabasi_albert', 'watts_strogatz', and 'no_network'")
-
+                             f"Currently implemented network types are: "
+                             f"'erdos_renyi', 'barabasi_albert', 'watts_strogatz', and 'no_network'")
 
     def initialize_maps(self, flood_map_choice):
         """
@@ -143,12 +174,26 @@ class AdaptationModel(Model):
         self.band_flood_img, self.bound_left, self.bound_right, self.bound_top, self.bound_bottom = get_flood_map_data(
             self.flood_map)
 
+    def count_households_in_state(self, state):
+        """
+        Return the total number of households in a given state.
+
+        Parameters:
+        state (int): The state number to count.
+
+        Returns:
+        int: The number of households in the specified state.
+        """
+        return sum(1 for agent in self.schedule.agents if isinstance(agent, Households) and agent.state == state)
+
     def total_adapted_households(self):
-        """Return the total number of households that have adapted."""
-        #BE CAREFUL THAT YOU MAY HAVE DIFFERENT AGENT TYPES SO YOU NEED TO FIRST CHECK IF THE AGENT IS ACTUALLY A HOUSEHOLD AGENT USING "ISINSTANCE"
-        adapted_count = sum([1 for agent in self.schedule.agents if isinstance(agent, Households) and agent.is_adapted])
+        """
+        Return the total number of households that have adapted, considering all adaptation states (1 to 4).
+        """
+        # Sum the number of households in states 1 to 4
+        adapted_count = sum(self.count_households_in_state(state) for state in range(1, 5))
         return adapted_count
-    
+
     def plot_model_domain_with_agents(self):
         fig, ax = plt.subplots()
         # Plot the model domain
@@ -156,15 +201,21 @@ class AdaptationModel(Model):
         # Plot the floodplain
         floodplain_gdf.plot(ax=ax, color='lightblue', edgecolor='k', alpha=0.5)
 
-        # Collect agent locations and statuses
+        # Define a color map for different states
+        state_colors = {0: 'red', 1: 'orange', 2: 'yellow', 3: 'green', 4: 'blue'}
+
+        # Collect agent locations and states
         for agent in self.schedule.agents:
-            color = 'blue' if agent.is_adapted else 'red'
-            ax.scatter(agent.location.x, agent.location.y, color=color, s=10, label=color.capitalize() if not ax.collections else "")
-            ax.annotate(str(agent.unique_id), (agent.location.x, agent.location.y), textcoords="offset points", xytext=(0,1), ha='center', fontsize=9)
-        # Create legend with unique entries
+            agent_color = state_colors.get(agent.state, 'grey')  # Default to grey if state is not in the dictionary
+            ax.scatter(agent.location.x, agent.location.y, color=agent_color, s=10,
+                       label=agent_color.capitalize() if agent_color not in ax.legend_.legendHandles else "")
+            ax.annotate(str(agent.unique_id), (agent.location.x, agent.location.y), textcoords="offset points",
+                        xytext=(0, 1), ha='center', fontsize=9)
+
+        # Create a legend with unique entries
         handles, labels = ax.get_legend_handles_labels()
         by_label = dict(zip(labels, handles))
-        ax.legend(by_label.values(), by_label.keys(), title="Red: not adapted, Blue: adapted")
+        ax.legend(by_label.values(), by_label.keys(), title="Agent States")
 
         # Customize plot with titles and labels
         plt.title(f'Model Domain with Agents at Step {self.schedule.steps}')
@@ -172,23 +223,60 @@ class AdaptationModel(Model):
         plt.ylabel('Latitude')
         plt.show()
 
+    def information_policy_wave(self):
+        """
+        Function to implement the information policy wave based on the model's policy type and radius.
+        There are two types: 'NL-Alert' and 'Knocking'.
+
+        Parameters:
+        model: The model instance.
+        """
+        policy_type = self.information_policy_type
+        radius = self.information_policy_radius
+
+        if policy_type == 'NL-Alert':
+            # Randomly select 20% of households
+            selected_households = random.sample(self.schedule.agents, int(0.2 * len(self.schedule.agents)))
+            for agent in selected_households:
+                agent.reached = True
+
+        elif policy_type == 'Knocking':
+            if radius is None:
+                raise ValueError("Radius must be provided for 'Knocking' information policy.")
+
+            # Randomly select one household
+            initial_household = random.choice(self.schedule.agents)
+            # Inform households within the specified radius
+            for agent in self.schedule.agents:
+                if self.grid.get_distance(agent.pos, initial_household.pos) <= radius:
+                    agent.reached = True
+
     def step(self):
         """
-        introducing a shock: 
-        at time step 5, there will be a global flooding.
-        This will result in actual flood depth. Here, we assume it is a random number
-        between 0.5 and 1.2 of the estimated flood depth. In your model, you can replace this
-        with a more sound procedure (e.g., you can devide the floop map into zones and 
-        assume local flooding instead of global flooding). The actual flood depth can be 
-        estimated differently
+        introducing a shock:
+        at time step 15, there will be a global flooding.
+        This will result in actual flood depth. we assume initially it is a random number
+        between 0.5 and 1.2 of the estimated flood depth. (FOR FUTURE IMPLEMENTATION MAYBE: In your model, you can replace this
+        with a more sound procedure (e.g., you can devide the floop map into zones and
+        assume local flooding instead of global flooding). The actual flood depth can be
+        estimated differently)
         """
-        if self.schedule.steps == 5:
+        # Applying information policy wave
+        if self.schedule.steps == 1:  # or whatever condition you choose
+            self.information_policy_wave()
+
+        if self.schedule.steps == 15:
             for agent in self.schedule.agents:
-                # Calculate the actual flood depth as a random number between 0.5 and 1.2 times the estimated flood depth
-                agent.flood_depth_actual = random.uniform(0.5, 1.2) * agent.flood_depth_estimated
-                # calculate the actual flood damage given the actual flood depth
-                agent.flood_damage_actual = calculate_basic_flood_damage(agent.flood_depth_actual)
-        
+                if isinstance(agent, Households):
+                    # Calculate flood damage depending on adaptation state
+                    agent.calculate_flood_damage()
+
         # Collect data and advance the model by one step
         self.datacollector.collect(self)
         self.schedule.step()
+
+
+if __name__ == "__main__":
+    adaptation_model = AdaptationModel()
+    for i in range(50):  # Run for 50 steps
+        adaptation_model.step()
