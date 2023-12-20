@@ -78,48 +78,33 @@ class AdaptationModel(Model):
 
         # Data collection setup to collect data
         model_metrics = {
-            # Total households in each adaptation state
-            "total_households_state_0": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.state == 0),
-            "total_households_state_1": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.state == 1),
-            "total_households_state_2": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.state == 2),
-            "total_households_state_3": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.state == 3),
-            "total_households_state_4": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.state == 4),
-
-            # Average actual flood depth and damage across all households
-            "average_actual_flood_depth": lambda m: sum(agent.flood_depth_actual for agent in m.schedule.agents if isinstance(agent, Households)) / len(m.schedule.agents),
-            "average_actual_flood_damage": lambda m: sum(agent.flood_damage_actual for agent in m.schedule.agents if isinstance(agent, Households)) / len(m.schedule.agents),
-
-            # Proportion of households that have been reached by the information policy
-            "proportion_reached_by_info_policy": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.reached) / len(m.schedule.agents),
-
-            # Proportion of households within the floodplain
-            "proportion_in_floodplain": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.in_floodplain) / len(m.schedule.agents),
-
-            # Average level of knowledge among all households
-            "average_level_of_knowledge": lambda m: sum(agent.level_of_knowledge for agent in m.schedule.agents if isinstance(agent, Households)) / len(m.schedule.agents),
-
-            # Proportion of households influenced by neighbors
-            "proportion_influenced_by_neighbors": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, Households) and agent.has_been_influenced_by_neighbors) / len(m.schedule.agents),
-
-            #system damage
-            "TotalDamage": lambda m: sum(
-                agent.flood_damage_actual for agent in m.schedule.agents if isinstance(agent, Households)),
-            "AverageDamage": lambda m: sum(
-                agent.flood_damage_actual for agent in m.schedule.agents if isinstance(agent, Households)) / len(
+            "total_households_state_0": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 0),
+            "total_households_state_1": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 1),
+            "total_households_state_2": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 2),
+            "total_households_state_3": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 3),
+            "total_households_state_4": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 4),
+            "average_actual_flood_depth": lambda m: sum(agent.flood_depth_actual for agent in m.schedule.agents) / len(
                 m.schedule.agents),
+            "average_actual_flood_damage": lambda m: sum(
+                agent.flood_damage_actual for agent in m.schedule.agents) / len(m.schedule.agents),
+            "proportion_reached_by_info_policy": lambda m: sum(1 for agent in m.schedule.agents if agent.reached) / len(
+                m.schedule.agents),
+            "proportion_in_floodplain": lambda m: sum(1 for agent in m.schedule.agents if agent.in_floodplain) / len(
+                m.schedule.agents),
+            "average_level_of_knowledge": lambda m: sum(agent.level_of_knowledge for agent in m.schedule.agents) / len(
+                m.schedule.agents),
+            # Add or modify other metrics as needed
         }
 
         agent_metrics = {
             "FloodDepthActual": "flood_depth_actual",
             "FloodDamageActual": "flood_damage_actual",
             "State": "state",
-            "InFloodplain": "in_floodplain",  # Se l'agente si trova nella pianura alluvionale
-            "LevelOfKnowledge": "level_of_knowledge",  # Livello di conoscenza dell'agente
-            "HasBeenReached": "reached",  # Se l'agente è stato raggiunto dalla politica informativa
-            "HasBeenInfluenced": "has_been_influenced_by_neighbors",  # Se l'agente è stato influenzato dai vicini
-            "Location": "location",  # Posizione geografica dell'agente
-            # Se hai un metodo per contare gli amici o vicini, aggiungilo qui
-            "FriendsCount": lambda a: len(a.model.grid.get_neighbors(a.pos, include_center=False)),
+            "InFloodplain": "in_floodplain",
+            "LevelOfKnowledge": "level_of_knowledge",
+            "HasBeenReached": "reached",
+            "Location": lambda a: (a.location.x, a.location.y)  # Assuming location is a Point object
+            # Add or modify other agent-specific metrics as needed
         }
         # set up the data collector
         self.datacollector = DataCollector(model_reporters=model_metrics, agent_reporters=agent_metrics)
