@@ -1,26 +1,18 @@
 from model import AdaptationModel
 import matplotlib.pyplot as plt
-import networkx as nx
+import pandas as pd
 
-# Initialize the Adaptation Model with 50 household agents.
-model = AdaptationModel(number_of_households=50, flood_map_choice="harvey", network="watts_strogatz") # flood_map_choice can be "harvey", "100yr", or "500yr"
+# Inizialize the model as you wnat
+model = AdaptationModel(number_of_households=1000, flood_map_choice="100yr", network="watts_strogatz", information_policy_type='Knocking',information_policy_radius=8000)
 
-# Calculate positions of nodes for the network plot.
-# The spring_layout function positions nodes using a force-directed algorithm,
-# which helps visualize the structure of the social network.
-pos = nx.spring_layout(model.G)
-
-
-# Run the model for 20 steps and generate plots every 5 steps.
-for step in range(20):
+# run 15 steps
+for step in range(15):
     model.step()
 
-data = model.datacollector.get_model_vars_dataframe()
-print(f"Columns: {data.columns}")
+# Put data in data collector
+model_data = model.datacollector.get_model_vars_dataframe()
 
-#print(model.datacollector.get_model_vars_dataframe())
 
-import seaborn as sns
-sns.lineplot(data=model)
-
+print("Number of agents per state per step:")
+print(model_data[['total_households_state_0', 'total_households_state_1', 'total_households_state_2', 'total_households_state_3', 'total_households_state_4']].to_string())
 

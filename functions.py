@@ -1,4 +1,3 @@
-
 import random
 import numpy as np
 import math
@@ -162,4 +161,6 @@ def calculate_basic_flood_damage(flood_depth):
     else:
         # see flood_damage.xlsx for function generation
         flood_damage = 0.1746 * math.log(flood_depth) + 0.6483
+
+    print(f"Calculated flood damage: {flood_damage}")
     return flood_damage
