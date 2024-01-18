@@ -42,6 +42,7 @@ class AdaptationModel(Model):
                  number_of_nearest_neighbours=5,
                  information_policy_type = 'knocking',
                  information_policy_radius=None  # New parameter for radius
+
     ):
 
         super().__init__(seed=seed)
@@ -63,6 +64,11 @@ class AdaptationModel(Model):
         self.probability_of_network_connection = probability_of_network_connection
         self.number_of_edges = number_of_edges
         self.number_of_nearest_neighbours = number_of_nearest_neighbours
+        #batchrun codes
+        self.running = True
+
+
+
 
         # generating the graph according to the network used and the network parameters specified
         self.G = self.initialize_network()

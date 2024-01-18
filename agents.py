@@ -24,6 +24,7 @@ class Households(Agent):
         self.flood_depth_actual = 0  # Actual flood depth (updated during a flood event)
         self.flood_damage_actual = 0  # Actual flood damage (calculated based on flood depth)
 
+
     def step(self):
         """
         Step function called at every model step. It handles the adaptation state changes and neighbor influence.
