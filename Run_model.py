@@ -34,10 +34,13 @@ results = mesa.batch_run(
     display_progress=True,
 )
 
-results_df=pd.DataFrame(results, columns=['iteration', 'Step', 'Agent_ID', 'flood_map_choice', 'network', 'information_policy_type', 'total_households_state_0', 'total_households_state_1', 'total_households_state_2', 'total_households_state_3', 'total_households_state_4'])
 
 
-print(results_df.keys())
+results_df=pd.DataFrame(results, columns=['iteration', 'Step', 'AgentID', 'flood_map_choice', 'network', 'information_policy_type', 'total_households_state_0', 'total_households_state_1', 'total_households_state_2', 'total_households_state_3', 'total_households_state_4'])
+
+results_filtered = results_df[(results_df.AgentID == 0)]
+
+print(results_filtered.keys())
 
 #results_df.filter(items=['iteration', 'flood_map_choice', 'network'])
 
@@ -45,14 +48,14 @@ print(results_df.keys())
 
 #print(results_df)
 
-#results_filtered = results_df[(results_df.AgentID == 0) & (results_df.Step == 100)]
+
 #results_filtered[["iteration", "flood_map_choice"]].reset_index(
  #   drop=True
 #).head()
 
 #print(results_filtered)
 
-results_df.to_excel(r'C:\Users\RDvan\OneDrive\Documents\GitHub\Sen121-Group-13\output.xlsx', index=False)
+results_filtered.to_excel(r'C:\Users\RDvan\OneDrive\Documents\GitHub\Sen121-Group-13\output.xlsx', index=False)
 
 
 
