@@ -34,7 +34,7 @@ results = mesa.batch_run(
     display_progress=True,
 )
 
-results_df=pd.DataFrame(results, columns=['iteration', 'Step', 'flood_map_choice', 'network', 'information_policy_type', 'total_households_state_0', 'total_households_state_1', 'total_households_state_2', 'total_households_state_3', 'total_households_state_4'])
+results_df=pd.DataFrame(results, columns=['iteration', 'Step', 'Agent_ID', 'flood_map_choice', 'network', 'information_policy_type', 'total_households_state_0', 'total_households_state_1', 'total_households_state_2', 'total_households_state_3', 'total_households_state_4'])
 
 
 print(results_df.keys())
