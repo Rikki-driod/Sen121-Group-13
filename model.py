@@ -96,11 +96,11 @@ class AdaptationModel(Model):
 
         # Data collection setup to collect data
         model_metrics = {
-            "total_households_state_0": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 0),
-            "total_households_state_1": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 1),
-            "total_households_state_2": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 2),
-            "total_households_state_3": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 3),
-            "total_households_state_4": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 4),
+            "total_HH_state_0": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 0),
+            "total_HH_state_1": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 1),
+            "total_HH_state_2": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 2),
+            "total_HH_state_3": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 3),
+            "total_HH_state_4": lambda m: sum(1 for agent in m.schedule.agents if agent.state == 4),
             "average_actual_flood_depth": lambda m: sum(agent.flood_depth_actual for agent in m.schedule.agents) / len(
                 m.schedule.agents),
             "average_actual_flood_damage": lambda m: sum(

@@ -19,8 +19,8 @@ for step in range(15):
 model_data = model.datacollector.get_model_vars_dataframe()
 
 print("Number of agents per state per step:")
-print(model_data[['total_households_state_0', 'total_households_state_1', 'total_households_state_2',
-                  'total_households_state_3', 'total_households_state_4']].to_string())
+print(model_data[['total_HH_state_0', 'total_HH_state_1', 'total_HH_state_2',
+                  'total_HH_state_3', 'total_HH_state_4']].to_string())
 
 params = {"number_of_households": 1000, "information_policy_radius": 8000,
           "flood_map_choice": ['100yr', '500yr', 'harvey'],
@@ -30,7 +30,7 @@ params = {"number_of_households": 1000, "information_policy_radius": 8000,
 results = mesa.batch_run(
     AdaptationModel,
     parameters=params,
-    iterations=3,
+    iterations=10,
     max_steps=14,
     number_processes=1,
     data_collection_period=1,
@@ -52,7 +52,7 @@ results_filtered.to_excel(r'C:\Users\RDvan\OneDrive\Documents\GitHub\Sen121-Grou
 g_4 = sns.lineplot(
     data=results_filtered,
     x="Step",
-    y="total_households_state_4",
+    y="total_HH_state_4",
     hue="information_policy_type",
     errorbar=("ci", 95),
     palette="tab10",
@@ -62,16 +62,20 @@ plot_title = "Household final state growth over time"
 g_4.set(title=plot_title, ylabel="Total number of Households", xlabel="Step");
 
 
-g = sns.PairGrid(results_filtered, y_vars=["total_households_state_0",
-                                           "total_households_state_1", "total_households_state_2",
-                                           "total_households_state_3"], x_vars=["Step"],
+g = sns.PairGrid(results_filtered, y_vars=["total_HH_state_0",
+                                           "total_HH_state_1", "total_HH_state_2",
+                                           "total_HH_state_3"], x_vars=["Step"],
                  hue="information_policy_type", height=4)
 g.map(sns.lineplot)
 g.add_legend()
 
-scatter_map = sns.FacetGrid(results_filtered, col="flood_map_choice", height=4)
-scatter_map.map(sns.scatterplot, "iteration", "average_actual_flood_damage")
-# scatter_map.add_legend()
+results_filtered_2 = results_df[(results_df.AgentID == 0) & (results_df.Step == 14)]
+
+scatter_map = sns.PairGrid(results_filtered_2, y_vars=["average_actual_flood_damage",
+                                                     "average_init_flood_damage"],
+                           x_vars=["RunId"], hue="information_policy_type", height=4)
+scatter_map.map(sns.scatterplot)
+scatter_map.add_legend()
 
 plt.show()
 
