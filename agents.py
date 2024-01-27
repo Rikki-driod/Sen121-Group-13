@@ -23,6 +23,7 @@ class Households(Agent):
         # Initialize actual flood depth and damage
         self.flood_depth_actual = 0  # Actual flood depth (updated during a flood event)
         self.flood_damage_actual = 0  # Actual flood damage (calculated based on flood depth)
+        self.initial_damage = 0 #initial damage calculated before countermeassures based on household final state
 
 
     def step(self):
@@ -69,6 +70,7 @@ class Households(Agent):
 
         # Apply the reduction factor based on the household's state
         self.flood_damage_actual = initial_damage * damage_reduction_factor[self.state]
+        self.initial_damage = initial_damage
 
         print(f"Household {self.unique_id} - Flood Depth: {self.flood_depth_actual}, "
               f"Initial Damage: {initial_damage}, State: {self.state}, "

@@ -109,12 +109,15 @@ class AdaptationModel(Model):
                 m.schedule.agents),
             "proportion_in_floodplain": lambda m: sum(1 for agent in m.schedule.agents if agent.in_floodplain) / len(
                 m.schedule.agents),
+            "average_init_flood_damage": lambda m: sum(
+                agent.initial_damage for agent in m.schedule.agents) / len(m.schedule.agents),
             # Add or modify other metrics as needed
         }
 
         agent_metrics = {
             "FloodDepthActual": "flood_depth_actual",
             "FloodDamageActual": "flood_damage_actual",
+            "InitFloodDmg": "initial_damage",
             "State": "state",
             "InFloodplain": "in_floodplain",
             "HasBeenReached": "reached",
@@ -303,6 +306,7 @@ class AdaptationModel(Model):
         # At step 14, calculate the flood damage and depth for each household
         if self.schedule.steps == 14:
             total_damage = 0
+            initial_damage = 0
             total_depth = 0
             valid_depth_count = 0  # Counter for valid (non-negative) depths
 
@@ -310,6 +314,7 @@ class AdaptationModel(Model):
                 if isinstance(agent, Households):
                     agent.calculate_flood_damage()
                     total_damage += agent.flood_damage_actual
+                    initial_damage += agent.initial_damage
                     # Include only non-negative depths in the average calculation
                     if agent.flood_depth_actual >= 0:
                         total_depth += agent.flood_depth_actual
@@ -319,8 +324,10 @@ class AdaptationModel(Model):
             # Check to avoid division by zero
             average_depth = (total_depth / valid_depth_count) if valid_depth_count > 0 else 0
             average_damage = total_damage / self.number_of_households
+            average_initial_damage = initial_damage / self.number_of_households
             print(f"Average Flood Depth at Step 14: {average_depth}")
             print(f"Average Flood Damage at Step 14: {average_damage}")
+            print(f"Average Initial Flood Damage: {average_initial_damage}")
 
         # Proceed with regular model operations
         self.datacollector.collect(self)
