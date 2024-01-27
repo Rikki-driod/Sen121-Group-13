@@ -30,7 +30,7 @@ params = {"number_of_households": 1000, "information_policy_radius": 8000,
 results = mesa.batch_run(
     AdaptationModel,
     parameters=params,
-    iterations=10,
+    iterations=25,
     max_steps=14,
     number_processes=1,
     data_collection_period=1,
