@@ -45,7 +45,7 @@ class Households(Agent):
         """
         neighbors = self.model.grid.get_neighbors(self.pos, include_center=False)
         for neighbor in neighbors:
-            if random.random() < 0.3:  # 30% chance to influence each neighbor
+            if random.random() < 0.667:  # 30% chance to influence each neighbor
                 neighbor.change_state(min(4, neighbor.state + 1))  # Increase neighbor's state by 1, up to max 4
 
     def change_state(self, new_state):

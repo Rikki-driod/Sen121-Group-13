@@ -30,7 +30,7 @@ params = {"number_of_households": 1000, "information_policy_radius": 8000,
 results = mesa.batch_run(
     AdaptationModel,
     parameters=params,
-    iterations=2,
+    iterations=25,
     max_steps=14,
     number_processes=1,
     data_collection_period=1,
@@ -77,13 +77,22 @@ scatter_map = sns.PairGrid(results_filtered_2, y_vars=["average_actual_flood_dam
 scatter_map.map(sns.scatterplot)
 scatter_map.add_legend()
 
-g_bar = sns.PairGrid(results_filtered, y_vars=["total_HH_state_4",
+scatter_map_2 = sns.PairGrid(results_filtered_2, y_vars=["average_actual_flood_damage",
+                                                     "average_init_flood_damage"],
+                           x_vars=["RunId"], hue="flood_map_choice", height=4)
+scatter_map_2.map(sns.scatterplot)
+scatter_map_2.add_legend()
+
+g_bar = sns.PairGrid(results_filtered_2, y_vars=["total_HH_state_4",
                                            ], x_vars=["network"],
                  hue="information_policy_type", height=4)
 g_bar.map(sns.barplot)
 g_bar.add_legend()
 
 plt.show()
+
+
+
 
 # concatenated = pd.concat([results_filtered.total_households_state_0.assign(dataset='set1'),
 # results_filtered.total_households_state_1.assign(dataset='set2'), results_filtered.total_households_state_2.assign(
